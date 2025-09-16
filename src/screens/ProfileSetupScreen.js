@@ -1,5 +1,4 @@
-// src/screens/ProfileSetupScreen.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   StyleSheet,
@@ -11,6 +10,8 @@ import {
 } from "react-native";
 import { TextInput, Button, Text, Card } from "react-native-paper";
 import { useAuth } from "../context/AuthContext";
+import { firestore } from "../config/firebase";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 export default function ProfileSetupScreen({ navigation }) {
@@ -19,13 +20,43 @@ export default function ProfileSetupScreen({ navigation }) {
   const [gender, setGender] = useState("");
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
+  const [heartRate, setHeartRate] = useState("");
   const [systolic, setSystolic] = useState("");
   const [diastolic, setDiastolic] = useState("");
   const [smokingStatus, setSmokingStatus] = useState("");
   const [diabetesStatus, setDiabetesStatus] = useState("");
   const [familyHistory, setFamilyHistory] = useState("");
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const scrollViewRef = React.useRef();
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user?.email) {
+        const userDocRef = doc(firestore, "users", user.email);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const profile = userData.profile || {};
+          setDateOfBirth(
+            profile.dateOfBirth?.toDate
+              ? profile.dateOfBirth.toDate()
+              : new Date(1990, 0, 1)
+          );
+          setGender(profile.gender || "");
+          setWeight(profile.weight ? profile.weight.toString() : "");
+          setHeight(profile.height ? profile.height.toString() : "");
+          setHeartRate(profile.heartRate ? profile.heartRate.toString() : "");
+          setSystolic(profile.systolic ? profile.systolic.toString() : "");
+          setDiastolic(profile.diastolic ? profile.diastolic.toString() : "");
+          setSmokingStatus(profile.smokingStatus || "");
+          setDiabetesStatus(profile.diabetesStatus || "");
+          setFamilyHistory(profile.familyHistory || "");
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [user?.email]);
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -96,11 +127,12 @@ export default function ProfileSetupScreen({ navigation }) {
 
   const calculateRiskLevel = () => {
     const bmi = calculateBMI();
-    if (!bmi || !systolic || !diastolic) return null;
+    if (!bmi || !systolic || !diastolic || !heartRate) return null;
 
     const bmiValue = parseFloat(bmi);
     const systolicValue = parseFloat(systolic);
     const diastolicValue = parseFloat(diastolic);
+    const heartRateValue = parseFloat(heartRate);
 
     let riskPoints = 0;
 
@@ -121,6 +153,11 @@ export default function ProfileSetupScreen({ navigation }) {
     else if (bpStatus.risk === "moderate") riskPoints += 2;
     else if (bpStatus.risk === "low") riskPoints += 0;
 
+    // Heart rate factor
+    if (heartRateValue > 120) riskPoints += 2;
+    else if (heartRateValue >= 101) riskPoints += 1;
+    else if (heartRateValue < 60) riskPoints += 1;
+
     // Additional risk factors
     if (smokingStatus === "current") riskPoints += 3;
     else if (smokingStatus === "former") riskPoints += 1;
@@ -129,10 +166,20 @@ export default function ProfileSetupScreen({ navigation }) {
 
     if (familyHistory === "yes") riskPoints += 2;
 
+    // Calculate health score (max risk points assumed to be 15)
+    const maxRiskPoints = 15;
+    const healthScore = Math.max(
+      0,
+      100 - (riskPoints / maxRiskPoints) * 100
+    ).toFixed(1);
+
     // Determine risk level based on points
-    if (riskPoints >= 10) return "High Risk";
-    if (riskPoints >= 6) return "Moderate Risk";
-    return "Low Risk";
+    let riskLevel;
+    if (riskPoints >= 10) riskLevel = "High Risk";
+    else if (riskPoints >= 6) riskLevel = "Moderate Risk";
+    else riskLevel = "Low Risk";
+
+    return { riskLevel, healthScore };
   };
 
   const getRiskCategoryInfo = (riskLevel) => {
@@ -178,38 +225,93 @@ export default function ProfileSetupScreen({ navigation }) {
     });
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     const age = calculateAge(dateOfBirth);
     const bmi = calculateBMI();
-    const riskLevel = calculateRiskLevel();
-    const riskInfo = riskLevel ? getRiskCategoryInfo(riskLevel) : null;
+    const { riskLevel, healthScore } = calculateRiskLevel() || {};
     const bpStatus =
       systolic && diastolic
         ? getBloodPressureStatus(parseFloat(systolic), parseFloat(diastolic))
         : null;
 
-    // Mock user data with profile
-    login({
-      email: "user@example.com",
-      name: "John Doe",
-      profile: {
-        age,
-        dateOfBirth,
-        gender,
-        weight,
-        height,
-        systolic,
-        diastolic,
-        bmi,
-        riskLevel,
-        smokingStatus,
-        diabetesStatus,
-        familyHistory,
-        bpStatus: bpStatus ? bpStatus.status : "Unknown",
-      },
-    });
+    // Prepare the health score history entry with client-side timestamp
+    const healthScoreEntry = {
+      score: healthScore ? parseFloat(healthScore) : null,
+      timestamp: new Date().toISOString(), // Use client-side timestamp
+      date: new Date().toISOString().split("T")[0], // Store date as YYYY-MM-DD
+    };
 
-    navigation.navigate("Main", { riskLevel });
+    const profileData = {
+      age,
+      dateOfBirth,
+      gender,
+      weight: weight ? parseFloat(weight) : null,
+      height: height ? parseFloat(height) : null,
+      heartRate: heartRate ? parseFloat(heartRate) : null,
+      systolic: systolic ? parseFloat(systolic) : null,
+      diastolic: diastolic ? parseFloat(diastolic) : null,
+      smokingStatus,
+      diabetesStatus,
+      familyHistory,
+      bmi: bmi ? parseFloat(bmi) : null,
+      bpStatus: bpStatus ? bpStatus.status : "Unknown",
+      riskLevel,
+      healthScore: healthScore ? parseFloat(healthScore) : null,
+      HealthScoreHistory: [], // This will be updated below
+    };
+
+    try {
+      const userDocRef = doc(firestore, "users", user.email);
+      const userDoc = await getDoc(userDocRef);
+
+      const today = new Date().toISOString().split("T")[0];
+
+      if (userDoc.exists()) {
+        // Fetch existing HealthScoreHistory
+        const existingData = userDoc.data();
+        const existingHistory = existingData.profile?.HealthScoreHistory || [];
+
+        // Check if an entry for today already exists
+        const hasTodayEntry = existingHistory.some(
+          (entry) => entry.date === today
+        );
+
+        if (!hasTodayEntry) {
+          // Append new health score entry only if no entry exists for today
+          profileData.HealthScoreHistory = [
+            ...existingHistory,
+            healthScoreEntry,
+          ];
+        } else {
+          // Keep existing history without adding a new entry
+          profileData.HealthScoreHistory = existingHistory;
+        }
+
+        // Update existing user profile
+        await setDoc(userDocRef, { profile: profileData }, { merge: true });
+      } else {
+        // Create new user document with initial HealthScoreHistory
+        profileData.HealthScoreHistory = [healthScoreEntry];
+        await setDoc(userDocRef, {
+          email: user.email,
+          name: user.name || "John Doe",
+          createAt: serverTimestamp(),
+          profile: profileData,
+        });
+      }
+
+      // Update local auth state
+      login({
+        email: user.email,
+        name: user.name || "John Doe",
+        profile: profileData,
+      });
+
+      navigation.navigate("Main", { riskLevel });
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      alert("Failed to save profile. Please try again.");
+    }
   };
 
   const genderOptions = [
@@ -235,7 +337,7 @@ export default function ProfileSetupScreen({ navigation }) {
     systolic && diastolic
       ? getBloodPressureStatus(parseFloat(systolic), parseFloat(diastolic))
       : null;
-  const riskLevel = calculateRiskLevel();
+  const { riskLevel } = calculateRiskLevel() || {};
   const riskInfo = riskLevel ? getRiskCategoryInfo(riskLevel) : null;
 
   const handleInputFocus = (scrollOffset = 100) => {
@@ -349,6 +451,17 @@ export default function ProfileSetupScreen({ navigation }) {
                 onFocus={() => handleInputFocus(200)}
               />
 
+              <TextInput
+                label="Heart Rate (bpm)"
+                value={heartRate}
+                onChangeText={setHeartRate}
+                keyboardType="numeric"
+                mode="outlined"
+                style={styles.input}
+                left={<TextInput.Icon icon="heart-pulse" />}
+                onFocus={() => handleInputFocus(250)}
+              />
+
               {bmi && (
                 <View style={styles.resultContainer}>
                   <Text style={styles.resultLabel}>BMI:</Text>
@@ -458,6 +571,7 @@ export default function ProfileSetupScreen({ navigation }) {
                   !gender ||
                   !weight ||
                   !height ||
+                  !heartRate ||
                   !systolic ||
                   !diastolic ||
                   !smokingStatus ||
@@ -466,7 +580,7 @@ export default function ProfileSetupScreen({ navigation }) {
                 }
                 contentStyle={styles.buttonContent}
               >
-                Complete Assessment
+                {user?.email ? "Update Profile" : "Complete Assessment"}
               </Button>
             </Card.Content>
           </Card>

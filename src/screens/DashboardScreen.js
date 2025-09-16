@@ -1,4 +1,3 @@
-// src/screens/DashboardScreen.js
 import React from "react";
 import { View, ScrollView, StyleSheet, Dimensions } from "react-native";
 import { Text, Card, ProgressBar, Button } from "react-native-paper";
@@ -9,7 +8,7 @@ import Header from "../components/Header";
 
 const screenWidth = Dimensions.get("window").width;
 
-export default function DashboardScreen() {
+export default function DashboardScreen({ navigation }) {
   const { healthData } = useHealth();
   const { user } = useAuth();
 
@@ -145,6 +144,16 @@ export default function DashboardScreen() {
               color="#FF9800"
               style={styles.progressBar}
             />
+
+            <View style={styles.metricRow}>
+              <Text variant="bodyMedium">Heart Rate</Text>
+              <Text variant="titleMedium">{healthData.heartRate} bpm</Text>
+            </View>
+            <ProgressBar
+              progress={healthData.heartRate / 120}
+              color="#FF5722"
+              style={styles.progressBar}
+            />
           </Card.Content>
         </Card>
 
@@ -178,6 +187,19 @@ export default function DashboardScreen() {
           </Card.Content>
         </Card>
 
+        {/* Button to Update Profile */}
+        <Card style={styles.card}>
+          <Card.Content>
+            <Button
+              mode="contained"
+              onPress={() => navigation.navigate("ProfileSetup")}
+              style={styles.button}
+            >
+              Update Profile
+            </Button>
+          </Card.Content>
+        </Card>
+
         {/* Emergency Contact (High Risk Only) */}
         {healthData.riskLevel === "high" && (
           <Card style={[styles.card, styles.emergencyCard]}>
@@ -202,6 +224,7 @@ export default function DashboardScreen() {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -256,5 +279,9 @@ const styles = StyleSheet.create({
   },
   emergencyButton: {
     marginVertical: 6,
+  },
+  button: {
+    marginTop: 8,
+    paddingVertical: 8,
   },
 });

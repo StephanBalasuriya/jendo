@@ -1,9 +1,8 @@
-// App.js - Main Entry Point
 import React from "react";
-import { NavigationContainer } from "@react-navigation/native"; //wraps your whole app and manages navigation state.
-import { createNativeStackNavigator } from "@react-navigation/native-stack"; //allows moving between screens in a stack (e.g., Login → Register → ProfileSetup).
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Provider as PaperProvider } from "react-native-paper"; //from react-native-paper, provides Material Design components and theming.
+import { Provider as PaperProvider } from "react-native-paper";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { HealthProvider } from "./src/context/HealthContext";
@@ -30,8 +29,6 @@ function TabNavigator() {
           else if (route.name === "Education") iconName = "school";
           else if (route.name === "Notifications") iconName = "notifications";
           else if (route.name === "Profile") iconName = "person";
-          // else if (route.name === "ProfileSetup") iconName = "person-add";
-
           return <Icon name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: "#2196F3",
@@ -43,7 +40,6 @@ function TabNavigator() {
       <Tab.Screen name="Education" component={EducationScreen} />
       <Tab.Screen name="Notifications" component={NotificationsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
-      {/* <Tab.Screen name="ProfileSetup" component={ProfileSetupScreen} /> */}
     </Tab.Navigator>
   );
 }
@@ -61,7 +57,10 @@ function AppContent() {
             <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
           </>
         ) : (
-          <Stack.Screen name="Main" component={TabNavigator} />
+          <>
+            <Stack.Screen name="Main" component={TabNavigator} />
+            <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>

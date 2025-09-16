@@ -9,33 +9,9 @@ import {
 import { TextInput, Button, Text, Card } from "react-native-paper";
 import { useAuth } from "../context/AuthContext";
 
-// Example: hardcoded users (you can later fetch from API or AsyncStorage)
-const users = [
-  {
-    id: 1,
-    /*************  ✨ Windsurf Command ⭐  *************/
-    /**
-     * Returns a color based on the risk level of the user
-     * @returns {string} A hex color code
-     */
-    /*******  2e7ea147-b567-4eff-a8a0-42f70336ad6d  *******/ email:
-      "demo@jendo.com",
-    password: "password123",
-    name: "John Doe",
-    profile: { age: 35, gender: "male", weight: 75, height: 175 },
-  },
-  {
-    id: 2,
-    email: "alice@jendo.com",
-    password: "alice456",
-    name: "Alice",
-    profile: { age: 29, gender: "female", weight: 60, height: 165 },
-  },
-];
-
 export default function LoginScreen({ navigation }) {
-  const [email, setEmail] = useState("demo@jendo.com");
-  const [password, setPassword] = useState("password123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
@@ -46,25 +22,32 @@ export default function LoginScreen({ navigation }) {
     }
 
     setLoading(true);
-
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Check if user exists with matching email & password
-      const foundUser = users.find(
-        (u) =>
-          u.email.toLowerCase() === email.toLowerCase() &&
-          u.password === password
-      );
-
-      if (foundUser) {
-        login(foundUser); // ✅ Pass correct user into AuthContext
+      const result = await login(email, password);
+      if (result.success) {
+        // Navigation is handled by App.js based on isAuthenticated
+        Alert.alert("Success", "Signed in successfully");
       } else {
-        Alert.alert("Login Failed", "Invalid email or password");
+        // let errorMessage = "Something went wrong";
+        // switch (result.code) {
+        // case "auth/invalid-email":
+        //   errorMessage = "Invalid email address";
+        //   break;
+        // case "auth/user-not-found":
+        // case "auth/wrong-password":
+        //   errorMessage = "Invalid email or password";
+        //   break;
+        // case "auth/too-many-requests":
+        //   errorMessage = "Too many attempts. Please try again later.";
+        //   break;
+        // default:
+        let errorMessage = "    Invalid email or password";
+        // }
+        Alert.alert("Login Failed", errorMessage);
       }
     } catch (error) {
-      Alert.alert("Login Failed", "Something went wrong");
+      console.error("Login Error:", error.code, error.message);
+      Alert.alert("Login Failed", "An unexpected error occurred");
     } finally {
       setLoading(false);
     }

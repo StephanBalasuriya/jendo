@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import { auth } from "../config/firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { useAuth } from "../context/AuthContext";
 import {
   View,
   StyleSheet,
@@ -6,11 +9,8 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  TouchableOpacity,
 } from "react-native";
 import { TextInput, Button, Text, Card } from "react-native-paper";
-// import DateTimePicker from "@react-native-community/datetimepicker";
-// import { Picker } from "@react-native-picker/picker";
 
 export default function RegisterScreen({ navigation }) {
   const [formData, setFormData] = useState({
@@ -18,30 +18,20 @@ export default function RegisterScreen({ navigation }) {
     email: "",
     password: "",
     confirmPassword: "",
-    // birthday: null, // new field for birthday
-    // gender: "",
   });
 
   const [loading, setLoading] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const { login } = useAuth();
 
   const updateFormData = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleRegister = async () => {
-    const { name, email, password, confirmPassword, birthday, gender } =
-      formData;
+    const { name, email, password, confirmPassword } = formData;
 
     // Validation
-    if (
-      !name ||
-      !email ||
-      !password ||
-      !confirmPassword
-      // !birthday ||
-      // !gender
-    ) {
+    if (!name || !email || !password || !confirmPassword) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
@@ -51,21 +41,29 @@ export default function RegisterScreen({ navigation }) {
       return;
     }
 
-    if (password.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters");
-      return;
-    }
-
     setLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Register user with Firebase
+      await createUserWithEmailAndPassword(auth, email, password);
+      Alert.alert("Registration Successful");
 
-      // Navigate to ProfileSetup with formData
-      navigation.navigate("ProfileSetup", { userData: formData });
+      // Log in the user
+      try {
+        const result = await login(email, password);
+        if (result.success) {
+          // Navigate to ProfileSetupScreen
+          navigation.navigate("ProfileSetup", { userData: formData });
+        } else {
+          Alert.alert("Login Failed", "Invalid email or password");
+        }
+      } catch (error) {
+        console.error("Login Error:", error.code, error.message);
+        Alert.alert("Login Failed", "An unexpected error occurred");
+      }
     } catch (error) {
-      Alert.alert("Registration Failed", "Please try again");
+      console.error("Registration Error:", error.code, error.message);
+      Alert.alert("Registration Failed", error.message);
     } finally {
       setLoading(false);
     }
@@ -119,49 +117,6 @@ export default function RegisterScreen({ navigation }) {
               style={styles.input}
             />
 
-            {/* Birthday Picker */}
-            {/* <TouchableOpacity
-              onPress={() => setShowDatePicker(true)}
-              style={styles.dateInput}
-            >
-              <Text style={styles.dateText}>
-                {formData.birthday
-                  ? formData.birthday.toDateString()
-                  : "Select Birthday"}
-              </Text>
-            </TouchableOpacity>
-
-            {showDatePicker && (
-              <DateTimePicker
-                value={formData.birthday || new Date(2000, 0, 1)}
-                mode="date"
-                display="default"
-                maximumDate={new Date()}
-                onChange={(event, selectedDate) => {
-                  setShowDatePicker(false);
-                  if (selectedDate) {
-                    updateFormData("birthday", selectedDate);
-                  }
-                }}
-              />
-            )} */}
-
-            {/* Gender Picker */}
-            {/* <View style={styles.pickerContainer}> */}
-            {/* <Text style={styles.pickerLabel}>Gender</Text> */}
-            {/* <Picker
-                selectedValue={formData.gender}
-                onValueChange={(value) => updateFormData("gender", value)}
-                style={styles.picker} // for Android
-                itemStyle={{ color: "#444" }} // for iOS
-              >
-                <Picker.Item label="Select Gender" value="" />
-                <Picker.Item label="Male" value="male" />
-                <Picker.Item label="Female" value="female" />
-                <Picker.Item label="Other" value="other" />
-              </Picker>
-            </View> */}
-
             <Button
               mode="contained"
               onPress={handleRegister}
@@ -208,33 +163,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: "#ffffffff",
   },
-  dateInput: {
-    borderWidth: 1,
-    borderColor: "#777676ff",
-    borderRadius: 4,
-    padding: 14,
-    marginBottom: 16,
-    backgroundColor: "#ffffffff",
-  },
-  // dateText: {
-  //   fontSize: 16,
-  //   color: "#444",
-  // },
-  // pickerContainer: {
-  //   marginBottom: 16,
-  //   borderWidth: 1,
-  //   borderColor: "#777676ff",
-  //   borderRadius: 4,
-  // },
-  // pickerLabel: {
-  //   marginBottom: 4,
-  //   fontSize: 14,
-  //   color: "#444",
-  // },
-  // picker: {
-  //   backgroundColor: "#fff",
-  //   color: "#444",
-  // },
   button: {
     marginTop: 8,
     paddingVertical: 8,
