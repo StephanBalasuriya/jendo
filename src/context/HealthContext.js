@@ -38,6 +38,7 @@ export const HealthProvider = ({ children }) => {
 
   const updateProfile = async (newData) => {
     setProfile(newData);
+    console.log(profile);
   };
 
   const getRiskColor = () => {

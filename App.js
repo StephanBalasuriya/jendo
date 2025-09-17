@@ -15,6 +15,7 @@ import DashboardScreen from "./src/screens/DashboardScreen";
 import EducationScreen from "./src/screens/EducationScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
 import NotificationsScreen from "./src/screens/NotificationsScreen";
+import LoadingScreen from "./src/screens/LoadingScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -55,9 +56,11 @@ function AppContent() {
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
             <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
+            <Stack.Screen name="Loading" component={LoadingScreen} />
           </>
         ) : (
           <>
+            <Stack.Screen name="Loading" component={LoadingScreen} />
             <Stack.Screen name="Main" component={TabNavigator} />
             <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
           </>

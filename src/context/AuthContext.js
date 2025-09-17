@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-
+  const [userName, setUserName] = useState("");
   // ✅ get resetHealth inside provider (valid hook usage)
   const { resetHealth } = useHealth();
 
@@ -50,7 +50,10 @@ export const AuthProvider = ({ children }) => {
       return { success: false, error: error.message, code: error.code };
     }
   };
-
+  const updateName = (name) => {
+    setUserName(name);
+    console.log(userName);
+  };
   const logout = async () => {
     try {
       await signOut(auth);
@@ -67,7 +70,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated, login, logout, loading }}
+      value={{ user, updateName, isAuthenticated, login, logout, loading }}
     >
       {children}
     </AuthContext.Provider>
