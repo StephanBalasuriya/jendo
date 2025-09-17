@@ -10,7 +10,7 @@ const screenWidth = Dimensions.get("window").width;
 
 export default function DashboardScreen({ navigation }) {
   const { profile } = useHealth();
-  const { user } = useAuth();
+  const { userName } = useAuth();
 
   const getRiskColor = () => {
     switch (profile.riskLevel) {
@@ -79,7 +79,7 @@ export default function DashboardScreen({ navigation }) {
       <Header title="Dashboard" />
       <ScrollView style={styles.scrollView}>
         <Text variant="headlineLarge" style={styles.welcome}>
-          Hello {user?.name}!
+          Hello {userName}!
         </Text>
 
         {/* Risk Level Card */}
