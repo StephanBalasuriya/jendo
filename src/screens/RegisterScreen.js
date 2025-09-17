@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { auth } from "../config/firebase";
+import { auth, firestore } from "../config/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -11,6 +11,7 @@ import {
   Platform,
 } from "react-native";
 import { TextInput, Button, Text, Card } from "react-native-paper";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function RegisterScreen({ navigation }) {
   const [formData, setFormData] = useState({
@@ -53,6 +54,13 @@ export default function RegisterScreen({ navigation }) {
         const result = await login(email, password);
         if (result.success) {
           // Navigate to ProfileSetupScreen
+          Alert.alert("Login Successful");
+          const userDocRef = doc(firestore, "users", email);
+          await setDoc(userDocRef, {
+            email: email,
+            name: name,
+            createAt: serverTimestamp(),
+          });
           navigation.navigate("ProfileSetup", { userData: formData });
         } else {
           Alert.alert("Login Failed", "Invalid email or password");
