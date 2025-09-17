@@ -6,12 +6,12 @@ import { useHealth } from "../context/HealthContext";
 import Header from "../components/Header";
 
 export default function NotificationsScreen() {
-  const { healthData } = useHealth();
+  const { profile } = useHealth();
 
   const getNotifications = () => {
     const notifications = [];
 
-    if (healthData.riskLevel === "high") {
+    if (profile.riskLevel === "high") {
       notifications.push({
         id: 1,
         title: "Daily Check-in Required",
@@ -30,7 +30,7 @@ export default function NotificationsScreen() {
       });
     }
 
-    if (healthData.riskLevel === "moderate") {
+    if (profile.riskLevel === "moderate") {
       notifications.push({
         id: 3,
         title: "Weekly Progress Update",

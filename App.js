@@ -70,11 +70,11 @@ function AppContent() {
 export default function App() {
   return (
     <PaperProvider>
-      <AuthProvider>
-        <HealthProvider>
+      <HealthProvider>
+        <AuthProvider>
           <AppContent />
-        </HealthProvider>
-      </AuthProvider>
+        </AuthProvider>
+      </HealthProvider>
     </PaperProvider>
   );
 }

@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { TextInput, Button, Text, Card } from "react-native-paper";
 import { useAuth } from "../context/AuthContext";
+import { useHealth } from "../context/HealthContext";
 import { firestore } from "../config/firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -28,6 +29,7 @@ export default function ProfileSetupScreen({ navigation }) {
   const [familyHistory, setFamilyHistory] = useState("");
   const { login, user } = useAuth();
   const scrollViewRef = React.useRef();
+  const { updateProfile } = useHealth();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -300,13 +302,13 @@ export default function ProfileSetupScreen({ navigation }) {
         });
       }
 
-      // Update local auth state
-      login({
-        email: user.email,
-        name: user.name || "John Doe",
-        profile: profileData,
-      });
-
+      // // Update local auth state
+      // login({
+      //   email: user.email,
+      //   name: user.name || "John Doe",
+      //   profile: profileData,
+      // });
+      await updateProfile(profileData);
       navigation.navigate("Main", { riskLevel });
     } catch (error) {
       console.error("Error saving profile:", error);

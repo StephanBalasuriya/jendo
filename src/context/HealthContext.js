@@ -1,3 +1,4 @@
+// src/context/HealthContext.js
 import React, { createContext, useState, useContext } from "react";
 
 const HealthContext = createContext();
@@ -11,25 +12,41 @@ export const useHealth = () => {
 };
 
 export const HealthProvider = ({ children }) => {
-  const [healthData, setHealthData] = useState({
-    riskLevel: "moderate", // 'low', 'moderate', 'high'
-    healthScore: 75,
-    vascularIndex: 68,
-    lifestyleCompliance: 82,
-    trends: [65, 68, 72, 75, 78, 75, 82],
+  const [dailyLogs, setDailyLogs] = useState([]);
+
+  const resetHealth = () => setDailyLogs([]);
+
+  const [loading, setLoading] = useState(false);
+  const [profile, setProfile] = useState({
+    dateOfBirth: new Date(1990, 0, 1),
+    gender: "",
+    weight: "",
+    height: "",
+    heartRate: "",
+    systolic: "",
+    diastolic: "",
+    smokingStatus: "",
+    diabetesStatus: "",
+    familyHistory: "",
+    riskLevel: "Moderate Risk",
+    healthScore: 74,
+    HealthScoreHistory: [65, 68, 72, 75, 78, 75, 74],
+    age: "",
+    bmi: "",
+    bpStatus: "Moderate",
   });
 
-  const updateHealthData = (newData) => {
-    setHealthData((prev) => ({ ...prev, ...newData }));
+  const updateProfile = async (newData) => {
+    setProfile(newData);
   };
 
   const getRiskColor = () => {
-    switch (healthData.riskLevel) {
-      case "low":
+    switch (profile.riskLevel) {
+      case "Low Risk":
         return "#4CAF50";
-      case "moderate":
+      case "Moderate Risk":
         return "#FF9800";
-      case "high":
+      case "High Risk":
         return "#F44336";
       default:
         return "#2196F3";
@@ -37,8 +54,8 @@ export const HealthProvider = ({ children }) => {
   };
 
   const getRiskRecommendations = () => {
-    switch (healthData.riskLevel) {
-      case "low":
+    switch (profile.riskLevel) {
+      case "Low Risk":
         return {
           title: "Low Risk - Keep it up!",
           recommendations: [
@@ -47,7 +64,7 @@ export const HealthProvider = ({ children }) => {
             "• Monthly check-ups recommended",
           ],
         };
-      case "moderate":
+      case "Moderate Risk":
         return {
           title: "Moderate Risk - Stay Alert",
           recommendations: [
@@ -57,7 +74,7 @@ export const HealthProvider = ({ children }) => {
             "• Consider lifestyle changes",
           ],
         };
-      case "high":
+      case "High Risk":
         return {
           title: "High Risk - Take Action",
           recommendations: [
@@ -68,17 +85,22 @@ export const HealthProvider = ({ children }) => {
           ],
         };
       default:
-        return { title: "", recommendations: [] };
+        return { title: "Unknown Risk", recommendations: [] };
     }
   };
 
   return (
     <HealthContext.Provider
       value={{
-        healthData,
-        updateHealthData,
+        dailyLogs,
+        setDailyLogs,
+        resetHealth,
+        profile,
+        updateProfile,
         getRiskColor,
         getRiskRecommendations,
+        loading,
+        setLoading,
       }}
     >
       {children}

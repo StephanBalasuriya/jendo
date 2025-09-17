@@ -1,11 +1,12 @@
+// src/context/AuthContext.js
 import React, { createContext, useState, useEffect, useContext } from "react";
 import {
-  getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
 import { auth } from "../config/firebase";
+import { useHealth } from "./HealthContext";
 
 const AuthContext = createContext();
 
@@ -21,6 +22,9 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // ✅ get resetHealth inside provider (valid hook usage)
+  const { resetHealth } = useHealth();
 
   // Listen to Firebase auth state changes
   useEffect(() => {
@@ -52,6 +56,9 @@ export const AuthProvider = ({ children }) => {
       await signOut(auth);
       setUser(null);
       setIsAuthenticated(false);
+
+      resetHealth(); // ✅ safely reset HealthContext state
+
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };

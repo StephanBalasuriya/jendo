@@ -25,6 +25,7 @@ export default function LoginScreen({ navigation }) {
     try {
       const result = await login(email, password);
       if (result.success) {
+        console.log(result);
         // Navigation is handled by App.js based on isAuthenticated
         Alert.alert("Success", "Signed in successfully");
       } else {

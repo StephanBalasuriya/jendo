@@ -8,10 +8,10 @@ import { useNavigation } from "@react-navigation/native"; // Add this import
 const Header = ({ title = "Jendo" }) => {
   const navigation = useNavigation(); // Use hook to get navigation
   const { user } = useAuth();
-  const { healthData } = useHealth();
+  const { profile } = useHealth();
 
   const getRiskColor = () => {
-    switch (healthData.riskLevel) {
+    switch (profile.riskLevel) {
       case "low":
         return "#4CAF50";
       case "moderate":

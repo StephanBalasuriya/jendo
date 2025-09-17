@@ -8,7 +8,7 @@ import Header from "../components/Header";
 
 export default function ProfileScreen({ navigation }) {
   const { user, logout } = useAuth();
-  const { healthData } = useHealth();
+  const { profile } = useHealth();
 
   const handleLogout = () => {
     logout();
@@ -35,14 +35,14 @@ export default function ProfileScreen({ navigation }) {
             <List.Item
               title="Risk Level"
               description={
-                healthData.riskLevel.charAt(0).toUpperCase() +
-                healthData.riskLevel.slice(1)
+                profile.riskLevel.charAt(0).toUpperCase() +
+                profile.riskLevel.slice(1)
               }
               left={(props) => <List.Icon {...props} icon="favorite" />}
             />
             <List.Item
               title="Current Health Score"
-              description={`${healthData.healthScore}/100`}
+              description={`${profile.healthScore}/100`}
               left={(props) => <List.Icon {...props} icon="assessment" />}
             />
           </Card.Content>

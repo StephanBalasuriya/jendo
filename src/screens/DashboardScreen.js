@@ -9,11 +9,11 @@ import Header from "../components/Header";
 const screenWidth = Dimensions.get("window").width;
 
 export default function DashboardScreen({ navigation }) {
-  const { healthData } = useHealth();
+  const { profile } = useHealth();
   const { user } = useAuth();
 
   const getRiskColor = () => {
-    switch (healthData.riskLevel) {
+    switch (profile.riskLevel) {
       case "low":
         return "#4CAF50";
       case "moderate":
@@ -26,7 +26,7 @@ export default function DashboardScreen({ navigation }) {
   };
 
   const getRiskRecommendations = () => {
-    switch (healthData.riskLevel) {
+    switch (profile.riskLevel) {
       case "low":
         return {
           title: "Low Risk - Keep it up!",
@@ -65,7 +65,7 @@ export default function DashboardScreen({ navigation }) {
     labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     datasets: [
       {
-        data: healthData.trends,
+        data: profile.trends,
         color: (opacity = 1) => `rgba(33, 150, 243, ${opacity})`,
         strokeWidth: 2,
       },
@@ -79,7 +79,7 @@ export default function DashboardScreen({ navigation }) {
       <Header title="Dashboard" />
       <ScrollView style={styles.scrollView}>
         <Text variant="headlineLarge" style={styles.welcome}>
-          Hello, {user?.name}!
+          Hello {user?.name}!
         </Text>
 
         {/* Risk Level Card */}
@@ -115,20 +115,20 @@ export default function DashboardScreen({ navigation }) {
 
             <View style={styles.metricRow}>
               <Text variant="bodyMedium">Health Score</Text>
-              <Text variant="titleMedium">{healthData.healthScore}/100</Text>
+              <Text variant="titleMedium">{profile.healthScore}/100</Text>
             </View>
             <ProgressBar
-              progress={healthData.healthScore / 100}
+              progress={profile.healthScore / 100}
               color="#4CAF50"
               style={styles.progressBar}
             />
 
-            <View style={styles.metricRow}>
+            {/* <View style={styles.metricRow}>
               <Text variant="bodyMedium">Vascular Index</Text>
-              <Text variant="titleMedium">{healthData.vascularIndex}/100</Text>
+              <Text variant="titleMedium">{profile.vascularIndex}/100</Text>
             </View>
             <ProgressBar
-              progress={healthData.vascularIndex / 100}
+              progress={profile.vascularIndex / 100}
               color="#2196F3"
               style={styles.progressBar}
             />
@@ -136,28 +136,28 @@ export default function DashboardScreen({ navigation }) {
             <View style={styles.metricRow}>
               <Text variant="bodyMedium">Lifestyle Compliance</Text>
               <Text variant="titleMedium">
-                {healthData.lifestyleCompliance}%
+                {profile.lifestyleCompliance}%
               </Text>
             </View>
             <ProgressBar
-              progress={healthData.lifestyleCompliance / 100}
+              progress={profile.lifestyleCompliance / 100}
               color="#FF9800"
               style={styles.progressBar}
-            />
+            /> */}
 
             <View style={styles.metricRow}>
               <Text variant="bodyMedium">Heart Rate</Text>
-              <Text variant="titleMedium">{healthData.heartRate} bpm</Text>
+              <Text variant="titleMedium">{profile.heartRate} bpm</Text>
             </View>
             <ProgressBar
-              progress={healthData.heartRate / 120}
+              progress={profile.heartRate / 120}
               color="#FF5722"
               style={styles.progressBar}
             />
           </Card.Content>
         </Card>
 
-        {/* Health Trends Chart */}
+        {/* Health Trends Chart
         <Card style={styles.card}>
           <Card.Content>
             <Text variant="titleLarge">Weekly Health Trends</Text>
@@ -185,7 +185,7 @@ export default function DashboardScreen({ navigation }) {
               style={styles.chart}
             />
           </Card.Content>
-        </Card>
+        </Card> */}
 
         {/* Button to Update Profile */}
         <Card style={styles.card}>
@@ -201,7 +201,7 @@ export default function DashboardScreen({ navigation }) {
         </Card>
 
         {/* Emergency Contact (High Risk Only) */}
-        {healthData.riskLevel === "high" && (
+        {profile.riskLevel === "high" && (
           <Card style={[styles.card, styles.emergencyCard]}>
             <Card.Content>
               <Text variant="titleLarge" style={styles.emergencyTitle}>
