@@ -1,51 +1,47 @@
-// src/screens/EducationScreen.js
-import React, { useState } from "react";
-import { View, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
-import { Text, Card, Searchbar, Chip } from "react-native-paper";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  ActivityIndicator,
+} from "react-native";
+import { Text, Card, Searchbar, Chip, Button } from "react-native-paper";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import Header from "../components/Header";
-
-const educationalContent = [
-  {
-    id: 1,
-    title: "Understanding Vascular Health",
-    category: "basics",
-    type: "article",
-    description:
-      "Learn the fundamentals of vascular health and why it matters.",
-    readTime: "5 min read",
-  },
-  {
-    id: 2,
-    title: "Exercise for Better Circulation",
-    category: "exercise",
-    type: "video",
-    description: "Simple exercises to improve your vascular health.",
-    readTime: "10 min watch",
-  },
-  {
-    id: 3,
-    title: "Heart-Healthy Diet Tips",
-    category: "nutrition",
-    type: "article",
-    description: "Nutritional guidelines for optimal vascular health.",
-    readTime: "7 min read",
-  },
-  {
-    id: 4,
-    title: "Managing High Blood Pressure",
-    category: "management",
-    type: "article",
-    description: "Strategies for controlling blood pressure naturally.",
-    readTime: "8 min read",
-  },
-];
+import { firestore } from "../config/firebase";
+import { collection, getDocs } from "firebase/firestore";
 
 export default function EducationScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [educationalContent, setEducationalContent] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedContent, setSelectedContent] = useState(null);
 
   const categories = ["all", "basics", "exercise", "nutrition", "management"];
+
+  useEffect(() => {
+    const fetchEducationalContent = async () => {
+      try {
+        const querySnapshot = await getDocs(
+          collection(firestore, "educationalContent")
+        );
+        const contentList = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setEducationalContent(contentList);
+      } catch (error) {
+        console.error("Error fetching educational content: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEducationalContent();
+  }, []);
 
   const filteredContent = educationalContent.filter((item) => {
     const matchesSearch =
@@ -59,6 +55,48 @@ export default function EducationScreen() {
   const getTypeIcon = (type) => {
     return type === "video" ? "play-circle-filled" : "article";
   };
+
+  const handleContentPress = (item) => {
+    setSelectedContent(item);
+    setModalVisible(true);
+  };
+
+  const renderModalContent = () => {
+    if (!selectedContent) return null;
+    return (
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
+          <ScrollView style={styles.modalScroll}>
+            {selectedContent.type === "video" ? (
+              <Text style={styles.videoPlaceholder}>
+                Video: {selectedContent.title} (Play button would trigger video
+                player here)
+              </Text>
+            ) : (
+              <Text style={styles.modalText}>
+                {selectedContent.description}
+              </Text>
+            )}
+          </ScrollView>
+          <Button
+            mode="contained"
+            onPress={() => setModalVisible(false)}
+            style={styles.closeButton}
+          >
+            Close
+          </Button>
+        </View>
+      </View>
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2196F3" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -80,7 +118,10 @@ export default function EducationScreen() {
             key={category}
             selected={selectedCategory === category}
             onPress={() => setSelectedCategory(category)}
-            style={styles.categoryChip}
+            style={[
+              styles.categoryChip,
+              selectedCategory === category && styles.selectedCategoryChip,
+            ]}
           >
             {category.charAt(0).toUpperCase() + category.slice(1)}
           </Chip>
@@ -89,7 +130,10 @@ export default function EducationScreen() {
 
       <ScrollView style={styles.contentList}>
         {filteredContent.map((item) => (
-          <TouchableOpacity key={item.id}>
+          <TouchableOpacity
+            key={item.id}
+            onPress={() => handleContentPress(item)}
+          >
             <Card style={styles.contentCard}>
               <Card.Content>
                 <View style={styles.contentHeader}>
@@ -106,16 +150,30 @@ export default function EducationScreen() {
                   {item.title}
                 </Text>
                 <Text variant="bodyMedium" style={styles.contentDescription}>
-                  {item.description}
+                  {item.description.substring(0, 100)}
+                  {item.description.length > 100 ? "..." : ""}
+                </Text>
+                <Text variant="bodySmall" style={styles.contentType}>
+                  {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
                 </Text>
               </Card.Content>
             </Card>
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        {renderModalContent()}
+      </Modal>
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -125,6 +183,7 @@ const styles = StyleSheet.create({
     margin: 16,
     borderRadius: 8,
     elevation: 2,
+    backgroundColor: "#e6e6fa",
   },
   categoryScroll: {
     paddingHorizontal: 16,
@@ -133,6 +192,12 @@ const styles = StyleSheet.create({
   categoryChip: {
     marginRight: 8,
     backgroundColor: "white",
+    borderWidth: 1,
+    borderColor: "#ccc",
+  },
+  selectedCategoryChip: {
+    backgroundColor: "#e6e6fa",
+    borderColor: "#2196F3",
   },
   contentList: {
     paddingHorizontal: 16,
@@ -141,6 +206,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 12,
     elevation: 2,
+    backgroundColor: "#f0f0fa",
+    padding: 12,
   },
   contentHeader: {
     flexDirection: "row",
@@ -150,14 +217,58 @@ const styles = StyleSheet.create({
   },
   readTime: {
     color: "#666",
+    fontSize: 12,
   },
   contentTitle: {
     fontWeight: "bold",
     marginBottom: 4,
     color: "#2c3e50",
+    fontSize: 18,
   },
   contentDescription: {
     color: "#555",
     lineHeight: 20,
+    fontSize: 14,
+  },
+  contentType: {
+    color: "#2196F3",
+    fontSize: 12,
+    marginTop: 4,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f8f9fa",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 12,
+    width: "90%",
+    maxHeight: "80%",
+  },
+  modalScroll: {
+    flex: 1,
+  },
+  modalText: {
+    color: "#555",
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  videoPlaceholder: {
+    color: "#555",
+    lineHeight: 20,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  closeButton: {
+    marginTop: 10,
   },
 });
