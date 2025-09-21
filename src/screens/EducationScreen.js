@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Modal,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import { Text, Card, Searchbar, Chip, Button } from "react-native-paper";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -57,27 +58,43 @@ export default function EducationScreen() {
   };
 
   const handleContentPress = (item) => {
-    setSelectedContent(item);
-    setModalVisible(true);
+    console.log("Selected content:", item);
+    if (item.type === "video" && item.content) {
+      Linking.openURL(item.content).catch((err) =>
+        console.error("Error opening URL: ", err)
+      );
+    } else {
+      setSelectedContent(item);
+      setModalVisible(true);
+    }
   };
 
   const renderModalContent = () => {
-    if (!selectedContent) return null;
+    if (!selectedContent) {
+      return (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalText}>No content selected</Text>
+            <Button
+              mode="contained"
+              onPress={() => setModalVisible(false)}
+              style={styles.closeButton}
+            >
+              Close
+            </Button>
+          </View>
+        </View>
+      );
+    }
+
     return (
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
-          <ScrollView style={styles.modalScroll}>
-            {selectedContent.type === "video" ? (
-              <Text style={styles.videoPlaceholder}>
-                Video: {selectedContent.title} (Play button would trigger video
-                player here)
-              </Text>
-            ) : (
-              <Text style={styles.modalText}>
-                {selectedContent.description}
-              </Text>
-            )}
-          </ScrollView>
+          <View style={{ maxHeight: 300 }}>
+            <Text style={styles.modalText}>
+              {selectedContent.content || "No article content available"}
+            </Text>
+          </View>
           <Button
             mode="contained"
             onPress={() => setModalVisible(false)}
@@ -128,7 +145,10 @@ export default function EducationScreen() {
         ))}
       </ScrollView>
 
-      <ScrollView style={styles.contentList}>
+      <ScrollView
+        style={styles.contentList}
+        contentContainerStyle={styles.contentListContainer}
+      >
         {filteredContent.map((item) => (
           <TouchableOpacity
             key={item.id}
@@ -180,30 +200,47 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f9fa",
   },
   searchbar: {
-    margin: 16,
+    marginHorizontal: 16,
+    marginVertical: 12,
     borderRadius: 8,
     elevation: 2,
     backgroundColor: "#e6e6fa",
   },
   categoryScroll: {
     paddingHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   categoryChip: {
     marginRight: 8,
     backgroundColor: "white",
     borderWidth: 1,
     borderColor: "#ccc",
+    width: 80,
+    height: 36,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
   },
   selectedCategoryChip: {
     backgroundColor: "#e6e6fa",
     borderColor: "#2196F3",
+    width: 80,
+    height: 36,
+    justifyContent: "center",
+    alignItems: "center",
   },
   contentList: {
+    flex: 1,
     paddingHorizontal: 16,
   },
+  contentListContainer: {
+    paddingTop: 8, // Start content closer to the top
+    paddingBottom: 16, // Ensure space at the bottom for scrolling
+    flexGrow: 1,
+    justifyContent: "flex-start", // Align content to the top
+  },
   contentCard: {
-    marginBottom: 16,
+    marginBottom: 12, // Reduced margin for tighter vertical spacing
     borderRadius: 12,
     elevation: 2,
     backgroundColor: "#f0f0fa",
@@ -254,19 +291,10 @@ const styles = StyleSheet.create({
     width: "90%",
     maxHeight: "80%",
   },
-  modalScroll: {
-    flex: 1,
-  },
   modalText: {
     color: "#555",
     lineHeight: 20,
     marginBottom: 20,
-  },
-  videoPlaceholder: {
-    color: "#555",
-    lineHeight: 20,
-    marginBottom: 20,
-    textAlign: "center",
   },
   closeButton: {
     marginTop: 10,
